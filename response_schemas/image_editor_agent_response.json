@@ -1,0 +1,30 @@
+{
+  "agent_name": "Image Editor Agent",
+  "agent_id": "699c43ae3cd6d5c8e728bb4c",
+  "description": "Interprets natural language edit instructions and generates edited versions of user-uploaded images. Handles all edit types: background changes, object manipulation, style transforms, color/lighting adjustments, inpainting, and replacements. Supports iterative refinement and multi-variation generation.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "edit_description": "string",
+    "edit_type": "string",
+    "suggestions": [
+      "string"
+    ]
+  },
+  "example_response": {
+    "edit_description": "Description of the edits applied to the image",
+    "edit_type": "Category of edit performed (e.g., background_change, style_transfer, object_removal, color_adjustment, composite)",
+    "suggestions": [
+      "sample string"
+    ]
+  },
+  "has_module_outputs": true,
+  "module_outputs_example": {
+    "artifact_files": [
+      {
+        "file_url": "https://example.com/image.png"
+      }
+    ]
+  }
+}

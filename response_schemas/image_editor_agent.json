@@ -1,0 +1,13 @@
+{
+  "agent_name": "Image Editor Agent",
+  "agent_id": "699c43ae3cd6d5c8e728bb4c",
+  "agent_type": "json",
+  "accessor": "json",
+  "has_module_outputs": true,
+  "schema": {
+    "edit_description": "string - Description of the edits applied",
+    "edit_type": "string - Category of edit (background_change, style_transfer, object_removal, color_adjustment, composite)",
+    "suggestions": "string[] - Follow-up edit suggestions"
+  },
+  "module_outputs_note": "Images are returned via result.module_outputs.artifact_files array at the TOP LEVEL of the response (NOT inside result.response)"
+}

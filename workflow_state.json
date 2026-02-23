@@ -1,0 +1,12 @@
+{
+  "agents": {
+    "image_editor_agent": {
+      "agent_id": "699c43ae3cd6d5c8e728bb4c",
+      "name": "Image Editor Agent",
+      "has_image_output": true,
+      "has_voice": false,
+      "has_file_output": false,
+      "has_schedule": false
+    }
+  }
+}

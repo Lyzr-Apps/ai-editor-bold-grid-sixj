@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    {"id": "input_node", "type": "Input", "label": "User Image + Prompt", "nodeCategory": "input"},
+    {"id": "image_editor_agent", "type": "Agent", "label": "Image Editor Agent", "nodeCategory": "agent"},
+    {"id": "output_node", "type": "Output", "label": "Edited Image", "nodeCategory": "end"}
+  ],
+  "edges": [
+    {"source": "input_node", "target": "image_editor_agent"},
+    {"source": "image_editor_agent", "target": "output_node"}
+  ]
+}
