@@ -1,11 +1,63 @@
 'use client'
 
-import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { callAIAgent, uploadFiles, type ArtifactFile } from '@/lib/aiAgent'
+import React, { useState, useRef, useCallback } from 'react'
+import { callAIAgent, uploadFiles, type AIAgentResponse, type ArtifactFile } from '@/lib/aiAgent'
 import { cn } from '@/lib/utils'
 import { RiImageAddLine, RiDownloadLine, RiArrowGoBackLine, RiArrowRightLine, RiCloseLine } from 'react-icons/ri'
 
 const AGENT_ID = '699c43ae3cd6d5c8e728bb4c'
+
+// Extract artifact files from any level of the response
+function extractArtifactFiles(result: AIAgentResponse): ArtifactFile[] {
+  // 1. Top-level module_outputs (standard location)
+  if (Array.isArray(result?.module_outputs?.artifact_files) && result.module_outputs!.artifact_files.length > 0) {
+    return result.module_outputs!.artifact_files
+  }
+  // 2. Inside response.result.module_outputs
+  const r = result?.response?.result
+  if (r && typeof r === 'object') {
+    if (Array.isArray(r.module_outputs?.artifact_files) && r.module_outputs.artifact_files.length > 0) {
+      return r.module_outputs.artifact_files
+    }
+    // 3. artifact_files directly on result
+    if (Array.isArray(r.artifact_files) && r.artifact_files.length > 0) {
+      return r.artifact_files
+    }
+  }
+  // 4. Try parsing raw_response as a last resort
+  if (result?.raw_response) {
+    try {
+      const raw = typeof result.raw_response === 'string' ? JSON.parse(result.raw_response) : result.raw_response
+      if (Array.isArray(raw?.module_outputs?.artifact_files) && raw.module_outputs.artifact_files.length > 0) {
+        return raw.module_outputs.artifact_files
+      }
+      if (Array.isArray(raw?.response?.module_outputs?.artifact_files) && raw.response.module_outputs.artifact_files.length > 0) {
+        return raw.response.module_outputs.artifact_files
+      }
+    } catch {}
+  }
+  return []
+}
+
+// Extract image URL from response text/result as a fallback
+function extractImageUrl(result: AIAgentResponse): string | null {
+  const r = result?.response?.result
+  if (!r || typeof r !== 'object') return null
+  // Check common fields that might contain an image URL
+  for (const key of ['image_url', 'imageUrl', 'url', 'image', 'output_url', 'file_url']) {
+    const val = r[key]
+    if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'))) {
+      return val
+    }
+  }
+  // Check if any string value in result looks like an image URL
+  for (const val of Object.values(r)) {
+    if (typeof val === 'string' && /^https?:\/\/.*\.(png|jpg|jpeg|webp|gif)/i.test(val)) {
+      return val
+    }
+  }
+  return null
+}
 
 interface HistoryItem {
   id: string
@@ -79,9 +131,7 @@ export default function Page() {
       })
 
       if (result.success) {
-        const images = Array.isArray(result?.module_outputs?.artifact_files)
-          ? result.module_outputs!.artifact_files
-          : []
+        const images = extractArtifactFiles(result)
         const sug = Array.isArray(result.response?.result?.suggestions)
           ? result.response.result.suggestions
           : []
@@ -99,7 +149,18 @@ export default function Page() {
             setError('No image returned. Try rephrasing.')
           }
         } else {
-          setError('No image returned. Try a different prompt.')
+          // Fallback: check if there's a direct image URL in the response
+          const fallbackUrl = extractImageUrl(result)
+          if (fallbackUrl) {
+            setCurrentImage(fallbackUrl)
+            setSuggestions(sug)
+            setHistory((prev) => [
+              ...prev,
+              { id: crypto.randomUUID(), prompt, imageUrl: fallbackUrl, assetIds: currentAssetIds },
+            ])
+          } else {
+            setError('No image returned. Try a different prompt.')
+          }
         }
       } else {
         setError(result.error || 'Edit failed. Try again.')

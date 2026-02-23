@@ -281,11 +281,26 @@ async function pollTask(task_id: string) {
   let moduleOutputs: ModuleOutputs | undefined
   let agentResponseRaw: any = rawText
 
+  // 1. Check for module_outputs at the task level first (most common for image agents)
+  if (task.module_outputs && typeof task.module_outputs === 'object') {
+    moduleOutputs = task.module_outputs
+  }
+
+  // 2. Try to unwrap the response envelope
   try {
     const envelope = JSON.parse(rawText)
-    if (envelope && typeof envelope === 'object' && 'response' in envelope) {
-      moduleOutputs = envelope.module_outputs
-      agentResponseRaw = envelope.response
+    if (envelope && typeof envelope === 'object') {
+      // Check module_outputs inside the response envelope as well
+      if (!moduleOutputs && envelope.module_outputs) {
+        moduleOutputs = envelope.module_outputs
+      }
+      if ('response' in envelope) {
+        // Check one more level deep
+        if (!moduleOutputs && envelope.response?.module_outputs) {
+          moduleOutputs = envelope.response.module_outputs
+        }
+        agentResponseRaw = envelope.response
+      }
     }
   } catch {
     // Not standard JSON envelope — parseLLMJson will handle it
